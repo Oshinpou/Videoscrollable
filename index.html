@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Feed</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #101010;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #202020;
+  padding: 14px;
+  text-align: center;
+}
+button {
+  padding: 10px;
+  margin: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: #383838;
+  color: white;
+}
+nav { background: #181818; text-align: center; padding: 8px; }
+section { padding: 15px; }
+.card {
+  margin: 20px auto;
+  max-width: 650px;
+  background: #222;
+  padding: 12px;
+  border-radius: 12px;
+}
+video {
+  display: block;
+  width: 100%;
+  max-height: 65vh;
+  background: black;
+  border-radius: 8px;
+}
+p { line-height: 1.7; color: #ddd; }
+#status { font-size: 13px; color: #a6e8b5; }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>My Video Feed</h2>
+  <div id="status">Ready</div>
+  <button onclick="startFeed()">Start feed</button>
+  <button onclick="stopFeed()">Pause feed</button>
+  <button onclick="keepAwake()">Keep screen awake</button>
+</header>
+
+<nav>
+  <button onclick="goTo('home')">Home</button>
+  <button onclick="goTo('videos')">Videos</button>
+  <button onclick="goTo('articles')">Articles</button>
+</nav>
+
+<section id="home">
+  <h2>Welcome</h2>
+  <p>Explore videos and interesting reading material.</p>
+</section>
+
+<section id="videos">
+  <h2>Video feed</h2>
+
+  <div class="card">
+    <h3>Nature video</h3>
+    <video controls autoplay muted loop playsinline>
+      <source
+        src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        type="video/mp4">
+      Your browser does not support video.
+    </video>
+    <p>Watch a short nature video.</p>
+  </div>
+
+  <div class="card">
+    <h3>Watch again</h3>
+    <video controls muted loop playsinline>
+      <source
+        src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        type="video/mp4">
+    </video>
+    <p>Play the video when you choose.</p>
+  </div>
+</section>
+
+<section id="articles">
+  <h2>Reading corner</h2>
+  <div id="articlesContent"></div>
+</section>
+
+<script>
+let running = false;
+let timer = null;
+let wakeLock = null;
+
+function goTo(id) {
+  document.getElementById(id).scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+function startFeed() {
+  if (running) return;
+  running = true;
+  document.getElementById("status").textContent =
+    "Feed running";
+  scrollRandomly();
+}
+
+function stopFeed() {
+  running = false;
+  clearTimeout(timer);
+  document.getElementById("status").textContent =
+    "Feed paused";
+}
+
+function scrollRandomly() {
+  if (!running) return;
+
+  const max = document.documentElement.scrollHeight -
+              window.innerHeight;
+
+  if (max > 0) {
+    const direction = Math.random() < 0.5 ? -1 : 1;
+    const distance = 150 + Math.random() * 400;
+    let target = window.scrollY + direction * distance;
+
+    target = Math.max(0, Math.min(max, target));
+
+    window.scrollTo({
+      top: target,
+      behavior: "smooth"
+    });
+  }
+
+  timer = setTimeout(
+    scrollRandomly,
+    2500 + Math.random() * 3000
+  );
+}
+
+async function keepAwake() {
+  if (!("wakeLock" in navigator)) {
+    document.getElementById("status").textContent =
+      "Screen wake lock unsupported";
+    return;
+  }
+
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    document.getElementById("status").textContent =
+      "Screen wake lock active";
+  } catch (error) {
+    document.getElementById("status").textContent =
+      "Screen wake request denied";
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && running) {
+    keepAwake();
+  }
+});
+
+// Add reading material.
+const paragraphs = [
+  "Nature offers many fascinating sights, from flowers opening in sunlight to clouds moving across the sky.",
+  "Technology can help people learn new skills, explore ideas, and build useful applications.",
+  "Reading regularly introduces new concepts and encourages curiosity about the world.",
+  "A stable internet connection makes online learning, communication, and entertainment more convenient."
+];
+
+const articles = document.getElementById("articlesContent");
+
+for (let i = 0; i < 40; i++) {
+  const p = document.createElement("p");
+  p.textContent = paragraphs[i % paragraphs.length];
+  articles.appendChild(p);
+}
+</script>
+</body>
+</html>
